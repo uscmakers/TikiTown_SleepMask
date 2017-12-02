@@ -7,6 +7,10 @@ from serial import Serial
 import os
 import math
 import binascii
+import threading
+
+command = -1
+i = -1
 
 def code(port):
 	################# Old Code #######################
@@ -37,8 +41,25 @@ def code(port):
 	else:
 		print("Unauthorized command")
 	port.write(packed_data)
-	line = port.readline()
-	print(line)
+
+def program():
+	global command
+	while (command < 0):
+		command = input()
+
+def script(port):
+	global command
+	while(command < 0):
+		line = port.read(1)
+		if (line != "" and command < 0):
+			#i = int(line)
+			#i = unpack("=B", line)
+			i = ord(line)
+			if (i == 20):
+				print("Recieved 20")
+				exit()
+                	#print(line[:-1])
+			print(line, end='')
 
 def connect():
 	try:
@@ -51,13 +72,17 @@ def connect():
 
 
 def main():
-    print("Connecting...")
-    conn = connect()
-    print("Connected!")
-    
-    print("Running code...")
-    code(conn)
-    print("Code complete!")
+	print("Connecting...")
+	conn = connect()
+	print("Connected!")
+
+	print("Running code...")
+	code(conn)
+	t1 = threading.Thread(target=script, args=(conn,))
+	t2 = threading.Thread(target=program)
+	t1.start()
+	t2.start()
+	#print("Code complete!")
 
 if __name__ == "__main__":
-    main()
+	main()

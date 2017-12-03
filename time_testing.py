@@ -1,28 +1,34 @@
 import datetime
-from time import sleep
 
 def main():
-	raw_time = raw_input("Enter time to wake up (XX:XX): ")
+	raw_time = raw_input("Enter time to wake up (XX:XX:XX): ")
 	user_time = raw_time.split(":")
 	user_time[0] = int(user_time[0])
 	user_time[1] = int(user_time[1])
+	user_time[2] = int(user_time[2])
 
-	no_alarm = 1
-	while(no_alarm):
-		hour = datetime.datetime.now().time().hour
-		min = datetime.datetime.now().time().minute
-		
-		if (hour > 12):
-			hour -= 12
-
-		print("Curr:", hour, min, "Set:", user_time[0], user_time[1])
-
-		if (hour == user_time[0] and min == user_time[1]):
-			print("Alarm sounds!")
-			no_alarm = 0
+	threshold_sec = user_time[2] - 30
+	if (threshold_sec < 0):
+		threshold_min = user_time[1] - 1
+		if (threshold_min < 0):
+			threshold_hour = user_time[0] - 1
+			if (threshold_hour < 0):
+				user_time[0] = 23
+				user_time[1] = 60 + threshold_min
+				user_time[2] = 60 + threshold_sec
+			else:
+				user_time[0] = threshold_hour
+				user_time[1] = 60 + threshold_min
+				user_time[2] = 60 + threshold_sec
 		else:
-			print("Alarm still going!")
-			sleep(1)
+			user_time[1] = threshold_min
+			user_time[2] = 60 + threshold_sec
+	else:
+		user_time[2] = threshold_sec
+	
+	
+	time = datetime.datetime(datetime.datetime.now().year, datetime.datetime.now().month, datetime.datetime.now().day, user_time[0], user_time[1], user_time[2], 0, None)
+	print time
 
 if __name__ == "__main__":
         main()

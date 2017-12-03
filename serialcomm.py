@@ -27,8 +27,8 @@ def code(port):
                         SD = input("Enter sampling delay: ")
                         PD = input("Enter pulse delay: ")
 			raw_time = raw_input("Enter time to wake up (XX:XX:XX): ")
-			time_arr = raw_time.split(":")
-			user_time = [int(time_arr[0]), int(time_arr[1]), int(time_arr[2])]
+			user_time = raw_time.split(":")
+			time_arr = [int(user_time[0]), int(user_time[1]), int(user_time[2])]
 			if (datetime.datetime.now().time().hour > time_arr[0]):
 				days = monthrange(datetime.date.year, datetime.date.month)
 				if (datetime.date.day + 1 > days):

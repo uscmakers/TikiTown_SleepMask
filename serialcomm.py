@@ -33,13 +33,13 @@ def code(port):
 				days = monthrange(datetime.date.year, datetime.date.month)
 				if (datetime.date.day + 1 > days):
 					if (datetime.date.month > 12):
-						time = datetime.datetime(datetime.date.year + 1, 1, 1, time_arr[0], time_arr[1], time_arr[2], None)
+						time = datetime.datetime(datetime.date.year + 1, 1, 1, time_arr[0], time_arr[1], time_arr[2], 0, None)
 					else:
-						time = datetime.datetime(datetime.date.year, datetime.date.month + 1, 1, time_arr[0], time_arr[1], time_arr[2], None)
+						time = datetime.datetime(datetime.date.year, datetime.date.month + 1, 1, time_arr[0], time_arr[1], time_arr[2], 0, None)
 				else:
-					time = datetime.datetime(datetime.date.year, datetime.date.month, datetime.date.day + 1, time_arr[0], time_arr[1], time_arr[2], None)
+					time = datetime.datetime(datetime.date.year, datetime.date.month, datetime.date.day + 1, time_arr[0], time_arr[1], time_arr[2], 0, None)
 			else:
-				time = datetime.datetime(datetime.date.year, datetime.date.month, datetime.date.day, time_arr[0], time_arr[1], time_arr[2], None)
+				time = datetime.datetime(datetime.date.year, datetime.date.month, datetime.date.day, time_arr[0], time_arr[1], time_arr[2], 0, None)
                         packed_data = pack("=BHHH", command, NS, SD, PD)
                 elif (command == 2):
                         brightness = input("Enter brightness: ")

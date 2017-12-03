@@ -1,19 +1,20 @@
 #include <Wire.h>
 #include <MPU6050.h>
-#define MAX_BUFF_SIZE 6
-#define START_PACKET_SIZE 5
-#define STOP_PACKET_SIZE 3
+#define MAX_BUFF_SIZE 8
+#define START_PACKET_SIZE 7
+#define STOP_PACKET_SIZE 4
 #define QUIT_PACKET_SIZE 1
+#define ledPin 9
 
 typedef struct __attribute__((packed)){
-    unsigned char i_f;
-    unsigned int i_t;
-    unsigned char s_f;
+    unsigned int n_s; //num of samples
+    unsigned int s_d; //sampling delay
+    unsigned int p_d; //pulse delay
 } start_pkt;
 
 typedef struct __attribute__((packed)){
     unsigned char brightness;
-    unsigned char ramptime;
+    unsigned int ramptime;
 } stop_pkt;
 
 char serialInput[MAX_BUFF_SIZE];
@@ -23,15 +24,17 @@ volatile unsigned char cmd = 0;
 boolean readdata = false;
 volatile int i = 0;
 volatile int pktSize = 0;
-start_pkt startData;
-stop_pkt stopData;
+volatile start_pkt startData;
+volatile stop_pkt stopData;
 MPU6050 accel;
 Vector accelerationVector;
 double accelValue;
+int cnt = 0;
 
 
 void setup() {
   // initialize serial:
+  pinMode(7, OUTPUT);
   Serial.begin(9600);
   while(!accel.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_2G))
   {
@@ -43,33 +46,56 @@ void setup() {
 
 void loop() {
   // print the string when a newline arrives:
-  if (stringComplete) {
+  if (stringComplete || cmd == 1) {
 //    Serial.println("User input:");
 //    Serial.println(serialInput);
 //    Serial.println(String(pktSize) + char(97));
     switch (cmd){
       case(1): 
-        startData = *((start_pkt *)(serialInput + 1));
-        Serial.println(String(startData.i_f) + "-"+ String(startData.i_t) + "-" + String(startData.s_f));
-        accelerationVector = accel.readNormalizeAccel();
-        accelValue = pow(pow(accelerationVector.XAxis,2) + pow(accelerationVector.YAxis,2) + pow(accelerationVector.ZAxis,2),0.5);
+        
+        Serial.println("ns:"+String(startData.n_s) + "|sd:"+ String(startData.s_d) + "|pd:" + String(startData.p_d));
+        cnt = 0;
+        for (unsigned int j = 0; j < startData.n_s; j++) {
+          accelerationVector = accel.readNormalizeAccel();
+          accelValue = pow(pow(accelerationVector.XAxis,2) + pow(accelerationVector.YAxis,2) + pow(accelerationVector.ZAxis,2),0.5);
+          if (abs(accelValue - 9.81) > 0.35) {
+            cnt += 1;
+            Serial.print("cnt ");
+            Serial.print(cnt);
+            Serial.println();
+          }
+          if (cnt > (0.3 * startData.n_s)) {
+            Serial.write(1);
+            break;
+          }
+          Serial.print("accelValue ");
+          Serial.print(accelValue);
+          Serial.println(); 
+          delay(startData.s_d);
+        }
+        delay(startData.p_d);
         break;
       case(2):
-        stopData = *((stop_pkt *)(serialInput + 1));
+        
+        for (unsigned int j = 0; j < stopData.brightness; j++) {
+          analogWrite(ledPin, j);
+          delay(stopData.ramptime/stopData.brightness);
+        }
         Serial.println(String(stopData.brightness) + "-"+ String(stopData.ramptime));
         break;
       case(3):
         Serial.println("got quit");
+        analogWrite(ledPin, 0);
+        cmd = 0;
         break;
       default:
         Serial.println("Error");
         break;
     }
     // clear the data:
-    memset(serialInput, 0, MAX_BUFF_SIZE);
+    //
     stringComplete = false;
     stringStarted = false;
-    i = 0;
   }
 }
 
@@ -110,6 +136,18 @@ void serialEvent() {
     // do something about it:
     if (i >= pktSize) {
       stringComplete = true;
+      switch (cmd){
+        case(1): 
+          startData = *((start_pkt *)(serialInput + 1));
+          break;
+        case(2):
+          stopData = *((stop_pkt *)(serialInput + 1));
+          break;
+        default:
+          break;
+      }
+      memset(serialInput, 0, MAX_BUFF_SIZE);
+      i=0;
     }
   }
 }

@@ -15,50 +15,63 @@ i = -1
 time = datetime.datetime.now()
 
 def code(port):
-        global command
+	global command
 	global time
-        while(command !=0):
-                packed_data = ""
-                command = input("Enter command:\n\t0:quit\n\t1:start\n\t2:wake\n\t3:stop")
-                if (command == 0):
-                        break;
-                elif (command == 1):
-                        NS = input("Enter number of samples: ")
-                        SD = input("Enter sampling delay: ")
-                        PD = input("Enter pulse delay: ")
+	while(command !=0):
+		packed_data = ""
+		command = input("Enter command:\n\t0:quit\n\t1:start\n\t2:wake\n\t3:stop")
+		if (command == 0):
+			break;
+		elif (command == 1):
+			NS = input("Enter number of samples: ")
+			SD = input("Enter sampling delay: ")
+			PD = input("Enter pulse delay: ")
+
 			raw_time = raw_input("Enter time to wake up (XX:XX:XX): ")
 			user_time = raw_time.split(":")
-			time_arr = [int(user_time[0]), int(user_time[1]), int(user_time[2])]
-			if (datetime.datetime.now().time().hour > time_arr[0]):
-				days = monthrange(datetime.date.year, datetime.date.month)
-				if (datetime.date.day + 1 > days):
-					if (datetime.date.month > 12):
-						time = datetime.datetime(datetime.date.year + 1, 1, 1, time_arr[0], time_arr[1], time_arr[2], 0, None)
-					else:
-						time = datetime.datetime(datetime.date.year, datetime.date.month + 1, 1, time_arr[0], time_arr[1], time_arr[2], 0, None)
-				else:
-					time = datetime.datetime(datetime.date.year, datetime.date.month, datetime.date.day + 1, time_arr[0], time_arr[1], time_arr[2], 0, None)
-			else:
-				time = datetime.datetime(datetime.date.year, datetime.date.month, datetime.date.day, time_arr[0], time_arr[1], time_arr[2], 0, None)
-                        packed_data = pack("=BHHH", command, NS, SD, PD)
-                elif (command == 2):
-                        brightness = input("Enter brightness: ")
-                        ramp_up = input("Enter ramp up: ")
-                        packed_data = pack("=BBH", command, brightness, ramp_up)
-                elif (command == 3):
-                        packed_data = pack("=B", command)
-                else:
-                        print("Unauthorized command")
-                port.write(packed_data)
 
+			user_time[0] = int(user_time[0])
+			user_time[1] = int(user_time[1])
+			user_time[2] = int(user_time[2])
+			
+			threshold_sec = user_time[2] - 30
+			if (threshold_sec < 0):
+				threshold_min = user_time[1] - 1
+				if (threshold_min < 0):
+					threshold_hour = user_time[0] - 1
+					if (threshold_hour < 0):
+						user_time[0] = 23
+						user_time[1] = 60 + threshold_min
+						user_time[2] = 60 + threshold_sec
+					else:
+						user_time[0] = threshold_hour
+						user_time[1] = 60 + threshold_min
+						user_time[2] = 60 + threshold_sec
+				else:
+					user_time[1] = threshold_min
+					user_time[2] = 60 + threshold_sec
+			else:
+				user_time[2] = threshold_sec
+			time = datetime.datetime(datetime.datetime.now().year, datetime.datetime.now().month, datetime.datetime.now().day, user_time[0], user_time[1], user_time[2], 0, None)
+			packed_data = pack("=BHHH", command, NS, SD, PD)
+
+		elif (command == 2):
+			brightness = input("Enter brightness: ")
+			ramp_up = input("Enter ramp up: ")
+			packed_data = pack("=BBH", command, brightness, ramp_up)
+		elif (command == 3):
+			packed_data = pack("=B", command)
+		else:
+			print("Unauthorized command")
+		port.write(packed_data)
 
 def script(port):
 	global command
 	while(command != 0):
 		line = port.read(1)
 		if (line != "" and command != 0):
-			i = ord(line)
-			if (i == 1):
+			sleep_mode = ord(line)
+			if (sleep_mode == 1):
 				print("USER IS IN LIGHT SLEEP")
 				packed_data = pack("=BBH", 2, 255, 5000)
 				if (time < datetime.datetime.now()):
@@ -68,7 +81,7 @@ def script(port):
 
 def connect():
 	try:
-		conn = Serial('/dev/cu.usbmodemFA131', dsrdtr=0, rtscts=0, timeout=1) #tty.usbmodem1411
+		conn = Serial('/dev/tty.usbmodem1411', dsrdtr=0, rtscts=0, timeout=1) #cu.usbmodemFA131
 	except IOError:
 		print("Error opening serial port.", file=sys.stderr)
 		sys.exit(2)

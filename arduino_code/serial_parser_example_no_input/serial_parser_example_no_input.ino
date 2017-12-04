@@ -55,7 +55,7 @@ void loop() {
         for (unsigned int j = 0; j < startData.n_s; j++) {
           accelerationVector = accel.readNormalizeAccel();
           accelValue = pow(pow(accelerationVector.XAxis,2) + pow(accelerationVector.YAxis,2) + pow(accelerationVector.ZAxis,2),0.5);
-          if (abs(accelValue - 9.81) > 0.35) {
+          if (abs(accelValue - 9.81) > 0.25) {
             cnt += 1;
           }
           if (cnt > (0.3 * startData.n_s)) {

@@ -45,7 +45,7 @@ void setup() {
     Serial.println("Could not find a valid MPU6050 sensor, check wiring!");
     delay(500);
   }
-  checkAccelSettings();
+  //checkAccelSettings();
 }
 
 void loop() {
@@ -57,16 +57,13 @@ void loop() {
     switch (cmd){
       case(1): 
         
-        Serial.println("ns:"+String(startData.n_s) + "|sd:"+ String(startData.s_d) + "|pd:" + String(startData.p_d));
+        //Serial.println("ns:"+String(startData.n_s) + "|sd:"+ String(startData.s_d) + "|pd:" + String(startData.p_d));
         cnt = 0;
         for (unsigned int j = 0; j < startData.n_s; j++) {
           accelerationVector = accel.readNormalizeAccel();
           accelValue = pow(pow(accelerationVector.XAxis,2) + pow(accelerationVector.YAxis,2) + pow(accelerationVector.ZAxis,2),0.5);
           if (abs(accelValue - 9.81) > 0.35) {
             cnt += 1;
-            Serial.print("cnt ");
-            Serial.print(cnt);
-            Serial.println();
           }
           if (cnt > (0.3 * startData.n_s)) {
             Serial.write(1);
@@ -85,10 +82,11 @@ void loop() {
           analogWrite(ledPin, j);
           delay(stopData.ramptime/stopData.brightness);
         }
-        Serial.println(String(stopData.brightness) + "-"+ String(stopData.ramptime));
+      //  Serial.println(String(stopData.brightness) + "-"+ String(stopData.ramptime));
         break;
       case(3):
-        Serial.println("got quit");
+        Serial.println();
+        Serial.println("Have a good day!");
         analogWrite(ledPin, 0);
         cmd = 0;
         break;

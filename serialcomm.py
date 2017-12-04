@@ -80,13 +80,14 @@ def script(port):
 		if (line != "" and command != 0):
 			sleep_mode = ord(line)
 			packed_data = pack("=BBH", 2, 255, 5000)
+			print (datetime.datetime.now(), time_init)
 			if (sleep_mode == 1):
 				print("USER IS IN LIGHT SLEEP")
 				if (time < datetime.datetime.now()):
 					port.write(packed_data)
-			elif(time_init == datetime.datetime.now()):
-				port.write(packed_data)
-			print(line, end='')
+		if (time_init == datetime.datetime.now()):
+			port.write(packed_data)
+			#print(line, end='')
 
 def connect():
 	try:

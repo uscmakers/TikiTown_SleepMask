@@ -61,7 +61,6 @@ def code(port):
 				user_time[2] = threshold_sec
 			time = datetime.datetime(year, month, day, user_time[0], user_time[1], user_time[2], 0, None)
 			packed_data = pack("=BHHH", command, NS, SD, PD)
-
 		elif (command == 2):
 			brightness = input("Enter brightness: ")
 			ramp_up = input("Enter ramp up: ")
@@ -75,12 +74,11 @@ def code(port):
 def script(port):
 	global command
 	global time
+	packed_data = pack("=BBH", 2, 255, 5000)
 	while(command != 0):
 		line = port.read(1)
 		if (line != "" and command != 0):
 			sleep_mode = ord(line)
-			packed_data = pack("=BBH", 2, 255, 5000)
-			print (datetime.datetime.now(), time_init)
 			if (sleep_mode == 1):
 				print("USER IS IN LIGHT SLEEP")
 				if (time < datetime.datetime.now()):

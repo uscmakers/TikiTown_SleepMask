@@ -92,16 +92,13 @@ def script(port):
 					port.write(packed_data)
 					flag = 0
 		if (flag == 1 and time_init <= datetime.datetime.now()):
-                        print("timeinit ", time_init)
-                        print("datetime ", datetime.datetime.now())
-                        print("flag", flag) 
                         flag = 0
 			port.write(packed_data)
 			#print(line, end='')
 
 def connect():
 	try:
-		conn = Serial('/dev/cu.usbmodemFA131', dsrdtr=0, rtscts=0, timeout=1) #cu.usbmodemFA131
+		conn = Serial('/dev/cu.usbserial-AH05K3YE', dsrdtr=0, rtscts=0, timeout=1) #cu.usbmodemFA131
 	except IOError:
 		print("Error opening serial port.", file=sys.stderr)
 		sys.exit(2)

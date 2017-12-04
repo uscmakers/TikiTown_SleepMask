@@ -1,12 +1,9 @@
 #include <MPU6050.h>
 
-
-
 #include <Wire.h>
-
-#define MAX_BUFF_SIZE 8
-#define START_PACKET_SIZE 7
-#define STOP_PACKET_SIZE 4
+#define MAX_BUFF_SIZE 2
+#define START_PACKET_SIZE 1
+#define STOP_PACKET_SIZE 1
 #define QUIT_PACKET_SIZE 1
 #define ledPin 9
 
@@ -39,10 +36,11 @@ int cnt = 0;
 void setup() {
   // initialize serial:
   pinMode(7, OUTPUT);
+  pinMode(13, OUTPUT);
   Serial.begin(9600);
   while(!accel.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_2G))
   {
-    Serial.println("Could not find a valid MPU6050 sensor, check wiring!");
+  //  Serial.println("Could not find a valid MPU6050 sensor, check wiring!");
     delay(500);
   }
   //checkAccelSettings();
@@ -51,51 +49,40 @@ void setup() {
 void loop() {
   // print the string when a newline arrives:
   if (stringComplete || cmd == 1) {
-//    Serial.println("User input:");
-//    Serial.println(serialInput);
-//    Serial.println(String(pktSize) + char(97));
     switch (cmd){
       case(1): 
-        
-        //Serial.println("ns:"+String(startData.n_s) + "|sd:"+ String(startData.s_d) + "|pd:" + String(startData.p_d));
         cnt = 0;
         for (unsigned int j = 0; j < startData.n_s; j++) {
           accelerationVector = accel.readNormalizeAccel();
           accelValue = pow(pow(accelerationVector.XAxis,2) + pow(accelerationVector.YAxis,2) + pow(accelerationVector.ZAxis,2),0.5);
-          if (abs(accelValue - 9.81) > 0.35) {
+          if (abs(accelValue - 9.81) > 0.25) {
             cnt += 1;
           }
           if (cnt > (0.3 * startData.n_s)) {
             Serial.write(1);
             break;
           }
-          Serial.print("accelValue ");
-          Serial.print(accelValue);
-          Serial.println(); 
           delay(startData.s_d);
         }
         delay(startData.p_d);
         break;
       case(2):
-        
         for (unsigned int j = 0; j < stopData.brightness; j++) {
           analogWrite(ledPin, j);
           delay(stopData.ramptime/stopData.brightness);
         }
-      //  Serial.println(String(stopData.brightness) + "-"+ String(stopData.ramptime));
         break;
       case(3):
-        Serial.println();
-        Serial.println("Have a good day!");
         analogWrite(ledPin, 0);
         cmd = 0;
         break;
+      case(30):
+        digitalWrite(13, HIGH);
+        break;
       default:
-        Serial.println("Error");
+        digitalWrite(13, LOW);
         break;
     }
-    // clear the data:
-    //
     stringComplete = false;
     stringStarted = false;
   }
@@ -140,10 +127,15 @@ void serialEvent() {
       stringComplete = true;
       switch (cmd){
         case(1): 
-          startData = *((start_pkt *)(serialInput + 1));
+          //startData = *((start_pkt *)(serialInput + 1));
+          startData.n_s = 10;
+          startData.s_d = 100;
+          startData.p_d = 500;
           break;
         case(2):
-          stopData = *((stop_pkt *)(serialInput + 1));
+          //stopData = *((stop_pkt *)(serialInput + 1));
+          stopData.brightness = 255;
+          stopData.ramptime = 5000;
           break;
         default:
           break;

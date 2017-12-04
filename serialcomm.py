@@ -13,6 +13,7 @@ from calendar import monthrange
 command = -1
 i = -1
 time = datetime.datetime.now()
+time_init = datetime.datetime.now()
 
 def code(port):
 	global command
@@ -34,6 +35,12 @@ def code(port):
 			user_time[1] = int(user_time[1])
 			user_time[2] = int(user_time[2])
 			
+			year = datetime.datetime.now().year
+			month = datetime.datetime.now().month
+			day = datetime.datetime.now().day
+			
+			time_init = datetime.datetime(year, month, day, user_time[0], user_time[1], user_time[2], 0, None)
+			
 			threshold_sec = user_time[2] - 30
 			if (threshold_sec < 0):
 				threshold_min = user_time[1] - 1
@@ -52,7 +59,7 @@ def code(port):
 					user_time[2] = 60 + threshold_sec
 			else:
 				user_time[2] = threshold_sec
-			time = datetime.datetime(datetime.datetime.now().year, datetime.datetime.now().month, datetime.datetime.now().day, user_time[0], user_time[1], user_time[2], 0, None)
+			time = datetime.datetime(year, month, day, user_time[0], user_time[1], user_time[2], 0, None)
 			packed_data = pack("=BHHH", command, NS, SD, PD)
 
 		elif (command == 2):
@@ -67,6 +74,7 @@ def code(port):
 
 def script(port):
 	global command
+	global time
 	while(command != 0):
 		line = port.read(1)
 		if (line != "" and command != 0):
@@ -75,6 +83,8 @@ def script(port):
 				print("USER IS IN LIGHT SLEEP")
 				packed_data = pack("=BBH", 2, 255, 5000)
 				if (time < datetime.datetime.now()):
+					port.write(packed_data)
+				elif(time_init == datetime.datetime.now()):
 					port.write(packed_data)
 				#exit()
 			print(line, end='')

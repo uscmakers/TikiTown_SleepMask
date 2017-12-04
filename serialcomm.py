@@ -79,9 +79,9 @@ def script(port):
 		line = port.read(1)
 		if (line != "" and command != 0):
 			sleep_mode = ord(line)
+			packed_data = pack("=BBH", 2, 255, 5000)
 			if (sleep_mode == 1):
 				print("USER IS IN LIGHT SLEEP")
-				packed_data = pack("=BBH", 2, 255, 5000)
 				if (time < datetime.datetime.now()):
 					port.write(packed_data)
 			elif(time_init == datetime.datetime.now()):

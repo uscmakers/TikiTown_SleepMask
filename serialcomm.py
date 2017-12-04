@@ -84,9 +84,8 @@ def script(port):
 				packed_data = pack("=BBH", 2, 255, 5000)
 				if (time < datetime.datetime.now()):
 					port.write(packed_data)
-				elif(time_init == datetime.datetime.now()):
-					port.write(packed_data)
-				#exit()
+			elif(time_init == datetime.datetime.now()):
+				port.write(packed_data)
 			print(line, end='')
 
 def connect():

@@ -14,10 +14,13 @@ command = -1
 i = -1
 time = datetime.datetime.now()
 time_init = datetime.datetime.now()
+flag = 0
 
 def code(port):
 	global command
 	global time
+	global flag
+	global time_init
 	while(command !=0):
 		packed_data = ""
 		command = input("Enter command:\n\t0:quit\n\t1:start\n\t2:wake\n\t3:stop")
@@ -29,6 +32,7 @@ def code(port):
 			PD = input("Enter pulse delay: ")
 
 			raw_time = raw_input("Enter time to wake up (XX:XX:XX): ")
+			flag = 1
 			user_time = raw_time.split(":")
 
 			user_time[0] = int(user_time[0])
@@ -74,22 +78,30 @@ def code(port):
 def script(port):
 	global command
 	global time
+	global flag
+	global time_init
 	packed_data = pack("=BBH", 2, 255, 5000)
 	while(command != 0):
 		line = port.read(1)
+		print(line, end='')
 		if (line != "" and command != 0):
 			sleep_mode = ord(line)
 			if (sleep_mode == 1):
 				print("USER IS IN LIGHT SLEEP")
 				if (time < datetime.datetime.now()):
 					port.write(packed_data)
-		if (time_init == datetime.datetime.now()):
+					flag = 0
+		if (flag == 1 and time_init <= datetime.datetime.now()):
+                        print("timeinit ", time_init)
+                        print("datetime ", datetime.datetime.now())
+                        print("flag", flag) 
+                        flag = 0
 			port.write(packed_data)
 			#print(line, end='')
 
 def connect():
 	try:
-		conn = Serial('/dev/tty.usbmodem1411', dsrdtr=0, rtscts=0, timeout=1) #cu.usbmodemFA131
+		conn = Serial('/dev/cu.usbmodemFA131', dsrdtr=0, rtscts=0, timeout=1) #cu.usbmodemFA131
 	except IOError:
 		print("Error opening serial port.", file=sys.stderr)
 		sys.exit(2)

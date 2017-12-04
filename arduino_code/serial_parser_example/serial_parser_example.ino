@@ -1,5 +1,9 @@
-#include <Wire.h>
 #include <MPU6050.h>
+
+
+
+#include <Wire.h>
+
 #define MAX_BUFF_SIZE 8
 #define START_PACKET_SIZE 7
 #define STOP_PACKET_SIZE 4

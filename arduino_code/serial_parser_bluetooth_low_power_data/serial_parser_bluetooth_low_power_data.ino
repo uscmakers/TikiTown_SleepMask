@@ -5,21 +5,19 @@
 #include <avr/sleep.h>
 
 #define MAX_BUFF_SIZE 8
-#define START_PACKET_SIZE 7
-#define STOP_PACKET_SIZE 4
+#define START_PACKET_SIZE 3
+#define STOP_PACKET_SIZE 1
 #define QUIT_PACKET_SIZE 1  
 #define ledPin 3
 #define onBoardLed 13
 #define button 10
 #define SLEEP_EN 0
 #define THRES_EN 1
-#define THRES 1.5
+#define THRES 4
 #define TEST_MODE 0
 
 typedef struct __attribute__((packed)){
-    unsigned int n_s; //num of samples
-    unsigned int s_d; //sampling delay
-    unsigned int p_d; //pulse delay
+    unsigned int sample_delay; 
 } start_pkt;
 
 typedef struct __attribute__((packed)){
@@ -43,6 +41,7 @@ double accelValue = 0;
 double prevValue = 0;
 double deltaValue;
 int cnt = 0;
+int holdcnt = 0;
 int btnval = 0;
 int idlecount = 0;
 boolean trig = false;
@@ -81,7 +80,7 @@ void setup() {
   	// initialize serial:
 	// pinMode(7, OUTPUT);
   if(SLEEP_EN){
-    attachInterrupt(digitalPinToInterrupt(2),wakeUpNow, RISING);
+    //attachInterrupt(digitalPinToInterrupt(2),wakeUpNow, RISING);
   }
 	pinMode(onBoardLed, OUTPUT);
 	pinMode(button, INPUT_PULLUP);
@@ -98,7 +97,7 @@ void setup() {
 
   accel.setIntFreeFallEnabled(false);  
   accel.setIntZeroMotionEnabled(false);
-  accel.setIntMotionEnabled(true);
+  accel.setIntMotionEnabled(SLEEP_EN == 1);
 
   if(!SLEEP_EN){
     accel.setDLPFMode(MPU6050_DLPF_6);
@@ -109,10 +108,10 @@ void setup() {
 
   //accel.setSleepEnabled(1);
   
-  Serial.println("XYZ Offsets:");
-  Serial.println(accel.getAccelOffsetX());
-  Serial.println(accel.getAccelOffsetY());
-  Serial.println(accel.getAccelOffsetZ());
+  //Serial.println("XYZ Offsets:");
+  //Serial.println(accel.getAccelOffsetX());
+  //Serial.println(accel.getAccelOffsetY());
+  //Serial.println(accel.getAccelOffsetZ());
 
   if(TEST_MODE){
     cmd = 1;
@@ -122,25 +121,47 @@ void setup() {
 }
 
 void loop() {
+    if(SLEEP_EN)
+      digitalWrite(onBoardLed, HIGH);
+    
+    if (digitalRead(button) == LOW && cmd == 0){
+      delay(10);
+      while(digitalRead(button) == LOW){delay(100);holdcnt++;}
+      delay(10);
+      if(holdcnt > 2){
+        cmd = 1;
+        startData = {100};
+        stringComplete = true;
+        routineStarted = true;
+      }
+      holdcnt = 0;
+    }
   
-  	digitalWrite(onBoardLed, HIGH);
-    if(digitalRead(button) == LOW){
-    // print the string when a newline arrives:
-      if (cmd == 2){
+    if (digitalRead(button) == LOW && cmd == 1){
+      delay(10);
+      while(digitalRead(button) == LOW){delay(100);holdcnt++;}
+      delay(10);
+      if(holdcnt > 2){
         cmd = 3;
         stringComplete = true;
       }
+      holdcnt = 0;
     }
+  
     //Serial.println(idlecount);
     if (stringComplete || routineStarted) {
+        
+    
         // Serial.println("User input:");
         // Serial.println(serialInput);
         // Serial.println("Size:"+String(pktSize));
       	switch (cmd){
     		case(1): 
+            if(!(SLEEP_EN==1))
+              digitalWrite(onBoardLed, HIGH);
        	  	//Serial.println("ns:"+String(startData.n_s) + "|sd:"+ String(startData.s_d) + "|pd:" + String(startData.p_d));
 	          if(trig){
-              Serial.println("WOKE");
+              // Serial.println("WOKE");
               trig = false;
 	          }
             prevValue = accelValue;
@@ -151,11 +172,10 @@ void loop() {
             // Serial.print(", ");
             // Serial.println(accelerationVector.YAxis);
 		     
-            deltaValue = accelValue - prevValue;
-            if(!THRES_EN || ((deltaValue > THRES) || (deltaValue < -THRES))){
-           	  Serial.print("dValue ");
-           	  Serial.print(deltaValue);
-           	  Serial.println(); 
+            deltaValue = abs(accelValue - prevValue);
+            if(!(THRES_EN==1) || (deltaValue > THRES)){
+           	  //Serial.print("dValue ");
+           	  Serial.println(deltaValue);
             }
 
               
@@ -166,11 +186,14 @@ void loop() {
 		          analogWrite(ledPin, j);
 		          delay(stopData.ramptime/stopData.brightness);
 		        }
-		       	Serial.println(String(stopData.brightness) + "-"+ String(stopData.ramptime));
+		       	// Serial.println(String(stopData.brightness) + "-"+ String(stopData.ramptime));
 	        	break;
 	    	case(3):
 		       	// Serial.println();
-		       	Serial.println("Sleeping mask turned off");
+		       	// Serial.println("Sleeping mask turned off");
+            if(!(SLEEP_EN==1))
+              digitalWrite(onBoardLed, LOW);
+     
 		        analogWrite(ledPin, 0);
 		        cmd = 0;
 	        	break;
@@ -186,16 +209,15 @@ void loop() {
     if(SLEEP_EN){
       idlecount += 1;
     }
-    if(THRES_EN){
-      delay(5);
-    }
+    delay(startData.sample_delay);
+    
     //accelerationVector = accel.readNormalizeAccel();
     accelerationVector = accel.readNormalizeGyro();
    	if(idlecount >= 200){
-   		Serial.println("Going to sleep now");
+   		// Serial.println("Going to sleep now");
       delay(100);
    		sleepNow();
-   		Serial.println("Waking now");
+   		// Serial.println("Waking now");
    	}
 }
 
@@ -208,7 +230,7 @@ void serialEvent() {
     while (Serial.available()) {
 	    // get the new byte:
 	    char inChar = Serial.read();
-		// Serial.println(inChar, HEX);
+		  // Serial.println(inChar, HEX);
 	    // add it to the inputString:
 	    
 	    serialInput[i]= inChar;
@@ -240,7 +262,7 @@ void serialEvent() {
 			stringComplete = true;
 			switch (cmd){
 				case(1): 
-				  startData = {10,100,1000};
+				  startData = *((start_pkt *)(serialInput + 1));;
 				  routineStarted = true;
 				  break;
 				case(2):

@@ -1,7 +1,5 @@
 #include <MPU6050.h>
 
-
-
 #include <Wire.h>
 
 #define MAX_BUFF_SIZE 8

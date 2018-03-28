@@ -9,7 +9,9 @@ import time
 quit = False
 datalist = []
 starttime = time.time()
-
+continuous_save = True
+file = None
+file_name = ""
 
 class bluetoothTalker:
     def __init__(self):
@@ -97,15 +99,21 @@ def _recieve_thread():
     global quit
     global datalist
     global btTalker
+    global file
+    global file_name
     
     while(not quit):
         recieveval = btTalker.recv()
         print(str(recieveval))
         if recieveval != None:
-            try:
-                datalist.append((round(time.time()-starttime, 2),float(recieveval)))
-            except Exception as e:
-                print("Recieved nothing")
+        	deltat = round(time.time()-starttime, 2)
+        	if not continuous_save:
+	            try:
+	                datalist.append((round(time.time()-starttime, 2),float(recieveval)))
+	            except Exception as e:
+	                print(str(e))
+	        else:
+	        	file.write(str(deltat)+','+recieveval+'\n')
 
 
 def main():
@@ -113,6 +121,8 @@ def main():
     global datalist 
     global btTalker
     global starttime
+    global file
+    global file_name
 
     t = Thread(target=_recieve_thread)
     userinput=''
@@ -131,6 +141,11 @@ def main():
             except:
                 print("connection failed")
         if userinput=='start':
+        	if continuous_save:
+        		file_name = input("File name:")
+                file_name = file_name + ".csv"
+                file = open(file_name, 'w')
+
             if(btTalker.connected):
                 userinput2 = ''
 
@@ -151,8 +166,14 @@ def main():
         if userinput=='stop':
             returnval = struct.pack("=B", 3)
             btTalker.send(returnval)
+            if continuous_save:
+            	file.close()
         if userinput=='data':
             print(datalist)
+        if userinput=='clear':
+            del datalist[:]
+            datalist = []
+            starttime = time.time()
         if userinput=='save':
             try:
                 file_name = input("File name:")

@@ -13,7 +13,7 @@
 #define button 10
 #define SLEEP_EN 0
 #define THRES_EN 1
-#define THRES 4
+#define THRES 5
 #define TEST_MODE 0
 
 typedef struct __attribute__((packed)){

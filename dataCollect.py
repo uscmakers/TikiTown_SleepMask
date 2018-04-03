@@ -106,14 +106,14 @@ def _recieve_thread():
         recieveval = btTalker.recv()
         print(str(recieveval))
         if recieveval != None:
-        	deltat = round(time.time()-starttime, 2)
-        	if not continuous_save:
-	            try:
-	                datalist.append((round(time.time()-starttime, 2),float(recieveval)))
-	            except Exception as e:
-	                print(str(e))
-	        else:
-	        	file.write(str(deltat)+','+recieveval+'\n')
+            deltat = round(time.time()-starttime, 2)
+            if not continuous_save:
+                try:
+                    datalist.append((round(time.time()-starttime, 2),float(recieveval)))
+                except Exception as e:
+                    print(str(e))
+            else:
+                file.write(str(deltat)+','+recieveval)
 
 
 def main():
@@ -140,11 +140,14 @@ def main():
                 t.start()
             except:
                 print("connection failed")
-        if userinput=='start':
-        	if continuous_save:
-        		file_name = input("File name:")
+
+            if continuous_save:
+                file_name = input("File name:")
                 file_name = file_name + ".csv"
                 file = open(file_name, 'w')
+
+        if userinput=='start':
+            
 
             if(btTalker.connected):
                 userinput2 = ''
@@ -167,7 +170,8 @@ def main():
             returnval = struct.pack("=B", 3)
             btTalker.send(returnval)
             if continuous_save:
-            	file.close()
+            	if not file.closed:
+                	file.close()
         if userinput=='data':
             print(datalist)
         if userinput=='clear':

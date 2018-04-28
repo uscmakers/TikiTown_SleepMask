@@ -13,7 +13,8 @@
 #define button 10
 #define SLEEP_EN 0
 #define THRES_EN 1
-#define THRES 5
+#define THRES 6
+//#define THRES 0.7
 #define TEST_MODE 0
 
 typedef struct __attribute__((packed)){
@@ -144,6 +145,7 @@ void loop() {
       if(holdcnt > 2){
         cmd = 3;
         stringComplete = true;
+        routineStarted = false;
       }
       holdcnt = 0;
     }

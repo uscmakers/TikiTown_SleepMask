@@ -1,14 +1,14 @@
-from __future__ import print_function
+#from __future__ import print_function
 import sys
-import re
+#import re
 from time import sleep, time
 from struct import pack
 from serial import Serial
-import os
+#import os
 import math
 import threading
 import datetime
-from calendar import monthrange
+#from calendar import monthrange
 
 command = -1
 i = -1
@@ -16,7 +16,7 @@ time = datetime.datetime.now()
 time_init = datetime.datetime.now()
 flag = 0
 
-def code(port):
+def u(port):
 	global command
 	global time
 	global flag
@@ -24,7 +24,7 @@ def code(port):
 	try:
 		while(command !=0):
 			packed_data = ""
-			command = input("Enter command:\n\t0:quit\n\t1:start\n\t2:quick start\n\t3:wake\n\t4:stop")
+			command = input("Enter command:\n\t0:quit\n\t1:start\n\t2:quick start\n\t3:wake\n\t4:quick wake\n\t5:stop")
 			if (command == 0):
 				break;
 			elif (command == 1):
@@ -100,13 +100,15 @@ def code(port):
 				else:
 					user_time[2] = threshold_sec
 				time = datetime.datetime(year, month, day, user_time[0], user_time[1], user_time[2], 0, None)
-				packed_data = pack("=BHHH", 1, 10, 100, 1000)
+				packed_data = pack("=B", 4)
 
 			elif (command == 3):
 				brightness = input("Enter brightness: ")
 				ramp_up = input("Enter ramp up: ")
 				packed_data = pack("=BBH", 2, brightness, ramp_up)
 			elif (command == 4):
+				packed_data = pack("=B", 5)
+			elif (command == 5):
 				packed_data = pack("=B", 3)
 			else:
 				print("Unauthorized command")
@@ -115,7 +117,7 @@ def code(port):
 		print("Failed\n" + str(e))
 		command = 0
 
-def script(port):
+def usb_read(port):
 	global command
 	global time
 	global flag
@@ -139,7 +141,7 @@ def script(port):
 
 def connect():
 	try:
-		conn = Serial('/dev/ttyUSB0', dsrdtr=0, rtscts=0, timeout=1) #cu.usbmodemFA131
+		conn = Serial('/dev/ttyUSB1', dsrdtr=0, rtscts=0, timeout=1) #cu.usbmodemFA131
 	except IOError:
 		print("Error opening serial port.", file=sys.stderr)
 		sys.exit(2)
@@ -153,8 +155,8 @@ def main():
 	print("Connected!")
 
 	print("Running code...")
-	t1 = threading.Thread(target=script, args=(conn,))
-	t2 = threading.Thread(target=code, args=(conn,))
+	t1 = threading.Thread(target=usb_read, args=(conn,))
+	t2 = threading.Thread(target=usr_input, args=(conn,))
 	t1.start()
 	t2.start()
 

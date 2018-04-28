@@ -1,14 +1,38 @@
+/*
+ * NOTE: This program should work while connected via USB
+ * it is suggested that debugging be done over USB and when 
+ * connected over Bluetoooth to comment out all serial.print 
+ * statements except for specific instructions to the devices
+ * that it is connected to
+ * 
+ * The recommended python program to interface with the arduino 
+ * over usb is serialcomm.py. It is important to have python3
+ * on the computer and use the following command to run the program
+ * 
+ * sudo python3 serialcomm.py on mac 
+ * or python3 serialcommpy on pc *
+ * 
+ * *for pc the terminal must be open on administrator mode
+ * 
+ * It is important to note that all incoming data send to the 
+ * adruino must be sent in the form of binary values rather than
+ * ascii values and in the right format.
+ */
+
 #include <MPU6050.h>
 
 #include <Wire.h>
 
 #define MAX_BUFF_SIZE 8
-#define START_PACKET_SIZE 1
-#define STOP_PACKET_SIZE 1
+#define START_PACKET_SIZE 7
+#define QUICK_START_PACKET_SIZE 1
+#define QUICK_STOP_PACKET_SIZE 1
+#define STOP_PACKET_SIZE 4
 #define QUIT_PACKET_SIZE 1  
 #define ledPin 3
 #define onBoardLed 13
 #define button 10
+#define THRES 2
 
 typedef struct __attribute__((packed)){
     unsigned int n_s; //num of samples
@@ -33,7 +57,7 @@ volatile start_pkt startData;
 volatile stop_pkt stopData;
 MPU6050 accel;
 Vector accelerationVector;
-double accelValue;
+double accelValue, prevValue, deltaValue;;
 int cnt = 0;
 int btnval = 0;
 
@@ -48,8 +72,6 @@ void setup() {
 //    Serial.println("Could not find a valid MPU6050 sensor, check wiring!");
     delay(500);
   }
-//  Serial.println("Found a valid MPU6050 sensor");
-  //checkAccelSettings();
 }
 
 void loop() {
@@ -59,51 +81,65 @@ void loop() {
     cmd = 3;
     stringComplete = true;
   }
-  if (stringComplete || routineStarted) {
-    //Serial.println("User input:");
-    //Serial.println(serialInput);
-    //Serial.println("Size:"+String(pktSize));
-    switch (cmd){
-      case(1): 
-//        /Serial.println("ns:"+String(startData.n_s) + "|sd:"+ String(startData.s_d) + "|pd:" + String(startData.p_d));
+  if (stringComplete || routineStarted) { 
+    //routineStarted is only set to 1 when cmd 1 or 4 is sent to allow the code to loop through the
+    //cmd == 1 || cmd == 4 case
+    
+    if(cmd == 1 || cmd == 4){
+        /*************************light sleep detection algorithm******************/
+            /*When connected via bluetooth, any serial.print statements
+            //will be sent over bluetooth. Currently, the arduino is set
+            //to send a binary 1 when the algorithm detects that the user
+            //is in light sleep. The devices would then recieve the 1 and 
+            //determine if it's time to wake the user up by sending a 
+            //a binary 2 along with wake up parameters, or it would send 
+            //a binary 5 to wake up using the default wake up parameters*/ 
+                       
+        
         cnt = 0;
         digitalWrite(onBoardLed, HIGH);
+        
         for (unsigned int j = 0; j < startData.n_s; j++) {
-          accelerationVector = accel.readNormalizeAccel();
+          accelerationVector = accel.readNormalizeGyro();
+          prevValue = accelValue;
           accelValue = pow(pow(accelerationVector.XAxis,2) + pow(accelerationVector.YAxis,2) + pow(accelerationVector.ZAxis,2),0.5);
-          if (abs(accelValue - 9.81) > 0.35) {
+          deltaValue = abs(accelValue - prevValue);
+         
+          if (deltaValue > THRES) {
             cnt += 1;
           }
-//            Serial.print("accelValue ");
-//            Serial.print(accelValue);
-//            Serial.println(); 
-          if (cnt > (0.3 * startData.n_s)) {
-//            /Serial.print("sent trigger\n");
-            Serial.write(1);
+          
+          if (cnt > (0.3 * startData.n_s)) {  
+            Serial.write(1); //SENDS TRIGGER
             break;
           }
           delay(startData.s_d);
         }
         digitalWrite(onBoardLed, LOW);
         delay(startData.p_d);
-        break;
-      case(2):
+        /****************************************************************************/
+    }
+    else if(cmd == 2 || cmd == 5){
+        /*****************************User wake up stage****************************/
+            //TODO: Interface with Julia's led library for waking the user up
+            //using the multicolor LEDs
+            
         analogWrite(ledPin, 0);
         for (unsigned int j = 0; j < stopData.brightness; j++) {
           analogWrite(ledPin, j);
           delay(stopData.ramptime/stopData.brightness);
         }
-//        /Serial.println(String(stopData.brightness) + "-"+ String(stopData.ramptime));
-        break;
-      case(3):
-//        Serial.println();
-//        Serial.println("Have a good day!");
+
+        /****************************************************************************/
+    }
+    else if(cmd == 3){
+        /*****************************Turn off LEDs*********************************/
+            //TODO: Turn off the multicolor LEDs
+        
         analogWrite(ledPin, 0);
         cmd = 0;
-        break;
-      default:
-//        /Serial.println("Error");
-        break;
+        
+        /****************************************************************************/
     }
     // clear the data:
     //
@@ -121,13 +157,14 @@ void serialEvent() {
   while (Serial.available()) {
     // get the new byte:
     char inChar = Serial.read();
-///    Serial.println(inChar, HEX);
-    // add it to the inputString:
     
     serialInput[i]= inChar;
     i++;
     routineStarted = false;
-   
+
+    //Sees if this is the start of a string, if so the first byte is 
+    //set as the cmd and the pktSize is set so the program knows how 
+    //many bytes to recieve before it is done
     if (stringStarted == false){
       cmd = inChar;
       stringStarted = true;
@@ -141,23 +178,36 @@ void serialEvent() {
         case(3):
           pktSize = QUIT_PACKET_SIZE;
           break;
+        case(4):
+          pktSize = QUICK_START_PACKET_SIZE;
+          break;
+        case(5):
+          pktSize = QUICK_STOP_PACKET_SIZE;
+          break;
         default:
           stringStarted = false;
           break;
       }
     }
-    
-    // if the incoming character is a newline, set a flag so the main loop can
-    // do something about it:
+
+    //Determine parameters stage: any data following the initial cmd byte will
+    //be converted and stored in the appropriate template
     if (i >= pktSize) {
       stringComplete = true;
       switch (cmd){
         case(1): 
-          startData = {10,100,1000};
+          startData = *((start_pkt *)(serialInput + 1));
           routineStarted = true;
           break;
         case(2):
-          stopData = {255,5000};
+          stopData = *((stop_pkt *)(serialInput + 1));
+          break;
+        case(4):
+          startData = {10,100,1000};
+          routineStarted = true;
+          break;
+        case(5):
+          stopData = {255, 5000};
           break;
         default:
           break;

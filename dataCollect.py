@@ -9,7 +9,7 @@ import time
 quit = False
 datalist = []
 starttime = time.time()
-continuous_save = True
+continuous_save = False
 file = None
 file_name = ""
 

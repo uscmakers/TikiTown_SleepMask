@@ -1,4 +1,3 @@
-#include <MPU6050.h>
 
 
 
@@ -11,6 +10,7 @@
 #define ledPin 3
 #define onBoardLed 13
 #define button 10
+#define THRES 2
 
 typedef struct __attribute__((packed)){
     unsigned int sample_delay;
@@ -87,9 +87,10 @@ void loop() {
         digitalWrite(onBoardLed, HIGH);
         
         accelerationVector = accel.readNormalizeAccel();
+        //accelerationVector = accel.readNormalizeGyro();
         accelValue = pow(pow(accelerationVector.XAxis,2) + pow(accelerationVector.YAxis,2) + pow(accelerationVector.ZAxis,2),0.5);
         deltaA = abs(accelValue - prevValue);
-        if (deltaA > 0.20 && prevValue != 0) {
+        if (deltaA > THRES && prevValue != 0) {
           Serial.println(deltaA);
         }
         prevValue = accelValue;

@@ -16,7 +16,7 @@ time = datetime.datetime.now()
 time_init = datetime.datetime.now()
 flag = 0
 
-def u(port):
+def usr_input(port):
 	global command
 	global time
 	global flag
@@ -24,7 +24,8 @@ def u(port):
 	try:
 		while(command !=0):
 			packed_data = ""
-			command = input("Enter command:\n\t0:quit\n\t1:start\n\t2:quick start\n\t3:wake\n\t4:quick wake\n\t5:stop")
+			command = int(input("Enter command:\n\t0:quit\n\t1:start\n\t2:quick start\n\t3:wake\n\t4:quick wake\n\t5:stop"))
+
 			if (command == 0):
 				break;
 			elif (command == 1):
@@ -32,7 +33,7 @@ def u(port):
 				SD = input("Enter sampling delay: ")
 				PD = input("Enter pulse delay: ")
 
-				raw_time = raw_input("Enter time to wake up (XX:XX:XX): ")
+				raw_time = input("Enter time to wake up (XX:XX:XX): ")
 				flag = 1
 				user_time = raw_time.split(":")
 
@@ -67,7 +68,7 @@ def u(port):
 				time = datetime.datetime(year, month, day, user_time[0], user_time[1], user_time[2], 0, None)
 				packed_data = pack("=BHHH", 1, NS, SD, PD)
 			elif (command == 2):
-				raw_time = raw_input("Enter time to wake up (XX:XX:XX): ")
+				raw_time = input("Enter time to wake up (XX:XX:XX): ")
 				flag = 1
 				user_time = raw_time.split(":")
 
@@ -103,8 +104,8 @@ def u(port):
 				packed_data = pack("=B", 4)
 
 			elif (command == 3):
-				brightness = input("Enter brightness: ")
-				ramp_up = input("Enter ramp up: ")
+				brightness = int(input("Enter brightness: "))
+				ramp_up = int(input("Enter ramp up: "))
 				packed_data = pack("=BBH", 2, brightness, ramp_up)
 			elif (command == 4):
 				packed_data = pack("=B", 5)
@@ -121,12 +122,13 @@ def usb_read(port):
 	global command
 	global time
 	global flag
-	global time_init
+	global time_init	
 	packed_data = pack("=BBH", 2, 255, 5000)
 	while(command != 0):
 		line = port.read(1)
-		print(line, end='')
-		if (line != "" and command != 0):
+		
+		if (line != "" and command != 0 and len(line)!=0):
+			print(line, end='')
 			sleep_mode = ord(line)
 			if (sleep_mode == 1):
 				print("USER IS IN LIGHT SLEEP\n")
@@ -141,7 +143,7 @@ def usb_read(port):
 
 def connect():
 	try:
-		conn = Serial('/dev/ttyUSB1', dsrdtr=0, rtscts=0, timeout=1) #cu.usbmodemFA131
+		conn = Serial('/dev/ttyUSB0', dsrdtr=0, rtscts=0, timeout=1) #cu.usbmodemFA131
 	except IOError:
 		print("Error opening serial port.", file=sys.stderr)
 		sys.exit(2)

@@ -40,7 +40,7 @@ public class BluetoothReceiver extends AsyncTask<Void, Integer, Void> {
 
                 ledControl led = new ledControl();
                 if (led.isTime()) {
-                    int val = 2;
+                    int val = 5;
                     byte b = (byte) val;
                     try {
                         btSocket.getOutputStream().write(b);

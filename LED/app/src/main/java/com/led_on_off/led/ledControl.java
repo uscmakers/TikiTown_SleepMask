@@ -140,7 +140,7 @@ public class ledControl extends ActionBarActivity {
             @Override
             public void onClick(View v)
             {
-                int val = 1;
+                int val = 4;
                 byte b = (byte) val;
                 try {
                     btSocket.getOutputStream().write(b);
@@ -424,7 +424,7 @@ public class ledControl extends ActionBarActivity {
                         Log.d("read", Integer.toString(read));
                         if (read == 1) {
                             if (isTime()) {
-                                int val = 2;
+                                int val = 5;
                                 byte b = (byte) val;
                                 try {
                                     btSocket.getOutputStream().write(b);

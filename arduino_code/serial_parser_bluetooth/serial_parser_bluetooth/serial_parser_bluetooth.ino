@@ -22,6 +22,7 @@
 #include <MPU6050.h>
 
 #include <Wire.h>
+#include <ControlRGB.h>
 
 #define MAX_BUFF_SIZE 8
 #define START_PACKET_SIZE 7
@@ -60,6 +61,7 @@ Vector accelerationVector;
 double accelValue, prevValue, deltaValue;;
 int cnt = 0;
 int btnval = 0;
+ControlRGB ledControl = ControlRGB(3,5,6);
 
 void setup() {
   // initialize serial:
@@ -124,19 +126,13 @@ void loop() {
             //TODO: Interface with Julia's led library for waking the user up
             //using the multicolor LEDs
             
-        analogWrite(ledPin, 0);
-        for (unsigned int j = 0; j < stopData.brightness; j++) {
-          analogWrite(ledPin, j);
-          delay(stopData.ramptime/stopData.brightness);
-        }
-
+        ledControl.turnOn(stopData.brightness, stopData.brightness / 2, 0, stopData.ramptime);
         /****************************************************************************/
     }
     else if(cmd == 3){
         /*****************************Turn off LEDs*********************************/
-            //TODO: Turn off the multicolor LEDs
         
-        analogWrite(ledPin, 0);
+        ledControl.turnOff();
         cmd = 0;
         
         /****************************************************************************/
@@ -207,7 +203,7 @@ void serialEvent() {
           routineStarted = true;
           break;
         case(5):
-          stopData = {255, 5000};
+          stopData = {255, 7500};
           break;
         default:
           break;

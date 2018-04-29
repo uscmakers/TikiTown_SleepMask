@@ -97,7 +97,7 @@ void loop() {
             //a binary 2 along with wake up parameters, or it would send 
             //a binary 5 to wake up using the default wake up parameters*/ 
                        
-        
+        Serial.println("cmd1 " + cmd);
         cnt = 0;
         digitalWrite(onBoardLed, HIGH);
         
@@ -125,13 +125,13 @@ void loop() {
         /*****************************User wake up stage****************************/
             //TODO: Interface with Julia's led library for waking the user up
             //using the multicolor LEDs
-            
+        Serial.println("cmd2 " + cmd);
         ledControl.turnOn(stopData.brightness, stopData.brightness / 2, 0, stopData.ramptime);
         /****************************************************************************/
     }
     else if(cmd == 3){
         /*****************************Turn off LEDs*********************************/
-        
+        Serial.println("cmd3 " + cmd);
         ledControl.turnOff();
         cmd = 0;
         

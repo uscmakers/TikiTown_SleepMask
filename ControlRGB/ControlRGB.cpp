@@ -23,7 +23,7 @@ void ControlRGB::turnOn(int rBrightness, int gBrightness, int bBrightness, int d
 	int rCounter = 0;
 	int gCounter = 0;
 	int bCounter = 0;
-	int stepsMax = 500;
+	int stepsMax = 100;
 	for (int steps = 0; steps < stepsMax; steps++) {
 		analogWrite(_rPin, rCounter);
 		analogWrite(_gPin, gCounter);

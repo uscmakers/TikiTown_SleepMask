@@ -25,24 +25,27 @@
 #include <ControlRGB.h>
 
 #define MAX_BUFF_SIZE 8
-#define START_PACKET_SIZE 7
+#define START_PACKET_SIZE 8
 #define QUICK_START_PACKET_SIZE 1
 #define QUICK_STOP_PACKET_SIZE 1
-#define STOP_PACKET_SIZE 4
+#define STOP_PACKET_SIZE 6
 #define QUIT_PACKET_SIZE 1  
 #define ledPin 3
 #define onBoardLed 13
 #define button 10
-#define THRES 2
+//#define THRES 2
 
-typedef struct __attribute__((packed)){
+typedef struct __attribute__((packed)){ //8 bytes
     unsigned int n_s; //num of samples
     unsigned int s_d; //sampling delay
     unsigned int p_d; //pulse delay
+    unsigned char threshhold;
 } start_pkt;
 
-typedef struct __attribute__((packed)){
-    unsigned char brightness;
+typedef struct __attribute__((packed)){ //6 bytes
+    unsigned char rBrightness;
+    unsigned char gBrightness;
+    unsigned char bBrightness;
     unsigned int ramptime;
 } stop_pkt;
 
@@ -97,7 +100,6 @@ void loop() {
             //a binary 2 along with wake up parameters, or it would send 
             //a binary 5 to wake up using the default wake up parameters*/ 
                        
-        Serial.println("cmd1 " + cmd);
         cnt = 0;
         digitalWrite(onBoardLed, HIGH);
         
@@ -107,7 +109,7 @@ void loop() {
           accelValue = pow(pow(accelerationVector.XAxis,2) + pow(accelerationVector.YAxis,2) + pow(accelerationVector.ZAxis,2),0.5);
           deltaValue = abs(accelValue - prevValue);
          
-          if (deltaValue > THRES) {
+          if (deltaValue > startData.threshhold) {
             cnt += 1;
           }
           
@@ -125,13 +127,11 @@ void loop() {
         /*****************************User wake up stage****************************/
             //TODO: Interface with Julia's led library for waking the user up
             //using the multicolor LEDs
-        Serial.println("cmd2 " + cmd);
-        ledControl.turnOn(stopData.brightness, stopData.brightness / 2, 0, stopData.ramptime);
+        ledControl.turnOn(stopData.rBrightness, stopData.gBrightness, stopData.bBrightness, stopData.ramptime);
         /****************************************************************************/
     }
     else if(cmd == 3){
         /*****************************Turn off LEDs*********************************/
-        Serial.println("cmd3 " + cmd);
         ledControl.turnOff();
         cmd = 0;
         
@@ -153,7 +153,6 @@ void serialEvent() {
   while (Serial.available()) {
     // get the new byte:
     char inChar = Serial.read();
-    
     serialInput[i]= inChar;
     i++;
     routineStarted = false;
@@ -199,11 +198,11 @@ void serialEvent() {
           stopData = *((stop_pkt *)(serialInput + 1));
           break;
         case(4):
-          startData = {10,100,1000};
+          startData = {10,100,1000, 2};
           routineStarted = true;
           break;
         case(5):
-          stopData = {255, 7500};
+          stopData = {255, 128, 0, 7500};
           break;
         default:
           break;

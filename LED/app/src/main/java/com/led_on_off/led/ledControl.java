@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.NumberPicker;
 import android.widget.TimePicker;
 import android.widget.Toast;
 import android.app.ProgressDialog;
@@ -30,6 +31,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import yuku.ambilwarna.AmbilWarnaDialog;
+
 
 public class ledControl extends ActionBarActivity {
 
@@ -47,9 +50,14 @@ public class ledControl extends ActionBarActivity {
     TimePicker simpleTimePicker;
     Button start;
     Button stop;
+    Button picker;
     private InputStream mmInStream = null;
     byte[] buffer = new byte[1024];
     int bytes;
+    public int color;
+    NumberPicker np;
+    int ramptime;
+    boolean started = false;
 
 //    private short numSamples = 20;
 //    private short samplingDelay = 50;
@@ -60,6 +68,7 @@ public class ledControl extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
+        System.out.println("beginning");
         super.onCreate(savedInstanceState);
         dbHandler = new AndroidDatabaseManager(this);
         db = dbHandler.getReadableDatabase();
@@ -74,6 +83,12 @@ public class ledControl extends ActionBarActivity {
         simpleTimePicker = (TimePicker)findViewById(R.id.simpleTimePicker);
         start = (Button) findViewById(R.id.start);
         stop = (Button) findViewById(R.id.stop);
+        picker = (Button) findViewById(R.id.picker);
+
+        np = (NumberPicker) findViewById(R.id.numberPicker);
+
+        np.setMinValue(1);
+        np.setMaxValue(30);
 
 
         //call the widgets
@@ -86,6 +101,9 @@ public class ledControl extends ActionBarActivity {
 
         BluetoothReceiver task = new BluetoothReceiver();
         task.execute();
+
+        System.out.println("middle");
+
 
         //commands to be sent to bluetooth
 //        On.setOnClickListener(new View.OnClickListener()
@@ -135,6 +153,13 @@ public class ledControl extends ActionBarActivity {
             }
         });
 
+        np.setOnValueChangedListener(new NumberPicker.OnValueChangeListener(){
+            @Override
+            public void onValueChange(NumberPicker numberPicker, int i, int i1) {
+                ramptime = numberPicker.getValue();
+            }
+        });
+
         start.setOnClickListener(new View.OnClickListener()
         {
             @Override
@@ -148,7 +173,26 @@ public class ledControl extends ActionBarActivity {
                 } catch (IOException e) {
                     msg("Error");
                 }
+                started = true;
+//                try {
+//                    Log.d("read", "hi");
+//                    InputStream is = btSocket.getInputStream();
+//                    ByteBuffer message = ByteBuffer.allocate(8);
+//                    message.put((byte) 4);
+//
+////                    message.put((byte) 1);
+////                    message.putShort((short) 10);
+////                    message.putShort((short) 100);
+////                    message.putShort((short) 1000);
+////                    message.put((byte) 3);
+////                    Log.d("read", message.toString());
+//                    btSocket.getOutputStream().write(message.array());
+//                    btSocket.getOutputStream().flush();
+//                    Log.d("read", "done");
 
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
             }
         });
 
@@ -166,6 +210,15 @@ public class ledControl extends ActionBarActivity {
                     msg("Error");
                 }
 
+            }
+        });
+
+        picker.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                openColorPicker();
             }
         });
 
@@ -195,7 +248,40 @@ public class ledControl extends ActionBarActivity {
 
     }
 
+    public void openColorPicker() {
+        AmbilWarnaDialog dialog = new AmbilWarnaDialog(this, 0xffff8800, new AmbilWarnaDialog.OnAmbilWarnaListener() {
+
+            @Override
+            public void onOk(AmbilWarnaDialog dialog, int colors) {
+                // color is the color selected by the user.
+                color = colors;
+
+//                int colorLong = (int)Long.parseLong(String.valueOf(color), 16);
+
+                int rval = (color >> 16) & 0x00FF;
+                int gval = (color >> 8) & 0x00FF;
+                int bval = (color >> 0) & 0x00FF;
+
+                System.out.println(String.format("0x%08X", color));
+
+                Log.d("read", "sending " + color);
+//                Log.d("read", "sending " + colorLong);
+                Log.d("read", "sending " + rval);
+                Log.d("read", "sending " + gval);
+                Log.d("read", "sending " + bval);
+            }
+
+            @Override
+            public void onCancel(AmbilWarnaDialog dialog) {
+                // cancel was selected by the user
+            }
+        });
+
+        dialog.show();
+    }
+
     public Boolean isTime() {
+        if (!started) return false;
         Time time = new Time(getApplicationContext());
         String hourmin = time.getTime();
         List<String> timing = Arrays.asList(hourmin.split(","));
@@ -415,6 +501,34 @@ public class ledControl extends ActionBarActivity {
             try {
 
                 InputStream is = btSocket.getInputStream();
+
+                // start packet (1, number of samples, sampling delay, pulse delay, thres)
+
+//                int val = 1;
+//                byte b = (byte) val;
+//                btSocket.getOutputStream().write(b);
+//                btSocket.getOutputStream().flush();
+//
+//                int parameter1 = 10; // # of samples
+//                byte parameter = (byte) parameter1;
+//                btSocket.getOutputStream().write(parameter);
+//                btSocket.getOutputStream().flush();
+//
+//                int parameter2 = 100; // # of samples
+//                parameter = (byte) parameter2;
+//                btSocket.getOutputStream().write(parameter);
+//                btSocket.getOutputStream().flush();
+//
+//                int parameter3 = 1000; // # of samples
+//                parameter = (byte) parameter3;
+//                btSocket.getOutputStream().write(parameter);
+//                btSocket.getOutputStream().flush();
+//
+//                int parameter4 = 3; // # of samples
+//                parameter = (byte) parameter4;
+//                btSocket.getOutputStream().write(parameter);
+//                btSocket.getOutputStream().flush();
+
                 byte[] buffer = new byte[25];
                 while (true) {
                     int read = is.read(buffer);
@@ -423,12 +537,68 @@ public class ledControl extends ActionBarActivity {
                         read = is.read(buffer);
                         Log.d("read", Integer.toString(read));
                         if (read == 1) {
+                            Log.d("debug", "here in read");
                             if (isTime()) {
-                                int val = 5;
-                                byte b = (byte) val;
+                                Log.d("debug", "here in time");
+//                                int val = 5;
+//                                byte b = (byte) val;
                                 try {
-                                    btSocket.getOutputStream().write(b);
-                                    Log.d("read", "sending " + b);
+
+                                    // wake up packet (2, rval, gval, bval, ramptime)
+
+//                                    ByteBuffer wakemessage = ByteBuffer.allocate(6);
+
+
+                                    //int colorLong = (int)Long.parseLong(String.valueOf(color), 16);
+
+                                    System.out.println(String.format("0x%08X", color));
+                                    //System.out.println(String.format("0x%08X", colorLong));
+
+                                    int rval = (color >> 16) & 0xFF;
+                                    int gval = (color >> 8) & 0xFF;
+                                    int bval = (color >> 0) & 0xFF;
+
+//                                    wakemessage.put((byte) 2);
+//                                    wakemessage.put((byte) rval); // # of samples
+//                                    wakemessage.put((byte) gval); // sampling delay
+//                                    wakemessage.put((byte) bval); // pulse delay
+//                                    wakemessage.putShort((short) (ramptime*1000)); // threshold
+//                                    btSocket.getOutputStream().write(wakemessage.array());
+//                                    btSocket.getOutputStream().flush();
+
+                                    Log.d("read", "sending " + color);
+//                                    Log.d("read", "sending " + colorLong);
+                                    Log.d("read", "sending " + rval);
+                                    Log.d("read", "sending " + gval);
+                                    Log.d("read", "sending " + bval);
+
+                                    Log.d("read", "sending " + ramptime);
+
+                                    int parameter;
+
+                                    int param1 = 2; // # of samples
+                                    parameter = (byte) param1;
+                                    btSocket.getOutputStream().write(parameter);
+                                    btSocket.getOutputStream().flush();
+
+                                    parameter = (byte) rval;
+                                    btSocket.getOutputStream().write(rval);
+                                    btSocket.getOutputStream().flush();
+
+                                    parameter = (byte) gval;
+                                    btSocket.getOutputStream().write(parameter);
+                                    btSocket.getOutputStream().flush();
+
+                                    parameter = (byte) bval;
+                                    btSocket.getOutputStream().write(parameter);
+                                    btSocket.getOutputStream().flush();
+
+                                    btSocket.getOutputStream().write((byte) (((short) (ramptime*1000)) & 0x0F));
+                                    btSocket.getOutputStream().write((byte) (((short) (ramptime*1000))>> 8));
+                                    btSocket.getOutputStream().flush();
+
+//                                    btSocket.getOutputStream().write(b);
+//                                    Log.d("read", "sending " + b);
                                 } catch (IOException e) {
                                 }
                                 read = 50;

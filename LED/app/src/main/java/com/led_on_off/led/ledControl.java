@@ -77,10 +77,10 @@ public class ledControl extends ActionBarActivity {
 
 
         //call the widgets
-        On = (ImageButton)findViewById(R.id.on);
-        Off = (ImageButton)findViewById(R.id.off);
-        Discnt = (ImageButton)findViewById(R.id.discnt);
-        Abt = (ImageButton)findViewById(R.id.abt);
+//        On = (ImageButton)findViewById(R.id.on);
+//        Off = (ImageButton)findViewById(R.id.off);
+//        Discnt = (ImageButton)findViewById(R.id.discnt);
+//        Abt = (ImageButton)findViewById(R.id.abt);
 
         new ConnectBT().execute(); //Call the class to connect
 
@@ -88,31 +88,31 @@ public class ledControl extends ActionBarActivity {
         task.execute();
 
         //commands to be sent to bluetooth
-        On.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                turnOnLed();      //method to turn on
-            }
-        });
-
-        Off.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v)
-            {
-                turnOffLed();   //method to turn off
-            }
-        });
-
-        Discnt.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                Disconnect(); //close connection
-            }
-        });
+//        On.setOnClickListener(new View.OnClickListener()
+//        {
+//            @Override
+//            public void onClick(View v)
+//            {
+//                turnOnLed();      //method to turn on
+//            }
+//        });
+//
+//        Off.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v)
+//            {
+//                turnOffLed();   //method to turn off
+//            }
+//        });
+//
+//        Discnt.setOnClickListener(new View.OnClickListener()
+//        {
+//            @Override
+//            public void onClick(View v)
+//            {
+//                Disconnect(); //close connection
+//            }
+//        });
 
 //        simpleTimePicker.setIs24HourView(true);
 
@@ -327,14 +327,14 @@ public class ledControl extends ActionBarActivity {
         Toast.makeText(getApplicationContext(),s,Toast.LENGTH_LONG).show();
     }
 
-    public  void about(View v)
-    {
-        if(v.getId() == R.id.abt)
-        {
-            Intent i = new Intent(this, AboutActivity.class);
-            startActivity(i);
-        }
-    }
+//    public  void about(View v)
+//    {
+//        if(v.getId() == R.id.abt)
+//        {
+//            Intent i = new Intent(this, AboutActivity.class);
+//            startActivity(i);
+//        }
+//    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

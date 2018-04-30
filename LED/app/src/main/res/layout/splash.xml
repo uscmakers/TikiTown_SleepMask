@@ -6,20 +6,39 @@
     android:orientation="vertical"
     android:background="#da4c3f">
 
+    <!--<ImageView-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="252dp"-->
+        <!--android:id="@+id/imageView2"-->
+        <!--android:src="@drawable/led"-->
+        <!--android:layout_marginTop="135dp"-->
+        <!--android:layout_gravity="center_horizontal" />-->
+
+    <!--<TextView-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:textAppearance="?android:attr/textAppearanceLarge"-->
+        <!--android:text="Sleep Mask"-->
+        <!--android:textSize="35dp"-->
+        <!--android:layout_marginTop="15dp"-->
+        <!--android:id="@+id/textView3"-->
+        <!--android:layout_gravity="center_horizontal" />-->
+
     <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="252dp"
         android:id="@+id/imageView2"
-        android:src="@drawable/led"
+        android:layout_width="279dp"
+        android:layout_height="192dp"
+        android:layout_gravity="center_horizontal"
         android:layout_marginTop="135dp"
-        android:layout_gravity="center_horizontal" />
+        android:src="@drawable/ic_sleepedited" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="Sleep Mask"
-        android:textSize="35dp"
+        android:textColor="#0d0201"
+        android:textSize="50dp"
         android:layout_marginTop="15dp"
         android:id="@+id/textView3"
         android:layout_gravity="center_horizontal" />

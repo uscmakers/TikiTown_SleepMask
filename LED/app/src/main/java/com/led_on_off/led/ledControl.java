@@ -23,6 +23,7 @@ import android.os.AsyncTask;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -284,15 +285,39 @@ public class ledControl extends ActionBarActivity {
         if (!started) return false;
         Time time = new Time(getApplicationContext());
         String hourmin = time.getTime();
+        Log.d("elapsed", time.toString());
+        Log.d("elapsed", hourmin);
+
         List<String> timing = Arrays.asList(hourmin.split(","));
         int hour = Integer.parseInt(timing.get(0));
         int minute = Integer.parseInt(timing.get(1));
+        Log.d("elapsed", Integer.toString(hour));
+        Log.d("elapsed", Integer.toString(minute));
 
         Date currentTime = Calendar.getInstance().getTime();
         Log.d("elapsed", currentTime.toString());
 
-        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss");
+
+        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss aa");
+//        sdf.setNumberFormat();
         String formattedTime = sdf.format(currentTime);
+        Log.d("elapsed", sdf.getNumberFormat().toString());
+
+        DateFormat readFormat = new SimpleDateFormat( "hh:mm:ss aa");
+        DateFormat writeFormat = new SimpleDateFormat( "HH:mm:ss");
+        Date date = null;
+        String formattedDate = null;
+        try {
+            date = readFormat.parse(formattedTime);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        if (date != null) {
+            formattedDate = writeFormat.format(date);
+        }
+
+        Log.d("elapsednew", formattedDate);
 
         Date date1 = null;
         Date date2 = null;
@@ -300,10 +325,29 @@ public class ledControl extends ActionBarActivity {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("hh:mm:ss");
         try {
             date1 = simpleDateFormat.parse(hour + ":" + minute + ":00");
-            date2 = simpleDateFormat.parse(formattedTime);
+            date2 = simpleDateFormat.parse(formattedDate);
         } catch (ParseException e) {
 
         }
+
+//        String formattedDate = null;
+//        DateFormat readFormat = new SimpleDateFormat("hh:mm:ss aa");
+//        DateFormat writeFormat = new SimpleDateFormat("HH:mm:ss");
+//        Date date = null;
+//        try {
+//            date = readFormat.parse(String.valueOf(date2));
+//        } catch (ParseException e) {
+//            e.printStackTrace();
+//        }
+//
+//        if (date != null) {
+//            formattedDate = writeFormat.format(date);
+//        }
+//
+        Log.d("elapsed!!", date1.toString());
+        Log.d("elapsed!!", date2.toString());
+
+
 
         long different = date1.getTime() - date2.getTime();
         long secondsInMilli = 1000;
